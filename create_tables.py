@@ -18,9 +18,24 @@ CREATE TABLE IF NOT EXISTS line_status (
 );
 
 ALTER TABLE line_status ENABLE ROW LEVEL SECURITY;
+
+
+CREATE TABLE IF NOT EXISTS reason_classification (
+    reason                      text PRIMARY KEY,
+    cause_category              text        NOT NULL,
+    is_planned                  boolean     NOT NULL,
+    cause_location              text,
+    affected_section            text,
+    tickets_accepted_elsewhere  boolean     NOT NULL,
+    model                       text        NOT NULL,
+    classified_at               timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE reason_classification ENABLE ROW LEVEL SECURITY;
+
 """
 
 with psycopg.connect(os.getenv("DATABASE_URL")) as conn:
     conn.execute(create_sql)
 
-print("Table line_status is ready")
+print("Tables are ready")
