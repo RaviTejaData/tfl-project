@@ -1,4 +1,5 @@
 import os
+import psycopg
 import json
 import requests
 from dotenv import load_dotenv
@@ -30,3 +31,31 @@ with open(file_path, "a") as f:
     f.write(json.dumps(record) + "\n")
 
 print(f"Saved to {file_path}")
+
+
+rows = []
+
+for line in response.json():
+    for index, status in enumerate(line["lineStatuses"]):
+        rows.append((
+            fetched_at,
+            line["id"],
+            index,
+            line["name"],
+            status["statusSeverity"],
+            status["statusSeverityDescription"],
+            status.get("reason"),
+        ))
+
+insert_sql = """
+INSERT INTO line_status
+    (fetched_at, line_id, status_index, line_name, severity, status, reason)
+VALUES (%s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT DO NOTHING
+"""
+
+with psycopg.connect(os.getenv("DATABASE_URL")) as conn:
+    with conn.cursor() as cur:
+        cur.executemany(insert_sql, rows)
+
+print(f"Inserted {len(rows)} rows into Supabase")
