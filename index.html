@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tube Live</title>
+<meta name="description" content="Live status of every London Underground line, collected every five minutes.">
+<meta name="theme-color" content="#07080F">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #07080F; --panel: #10121D; --panel-2: #171A29; --line: #262A3F;
+  --text: #F4F5FA; --muted: #A3A9C2;
+  --violet: #7566FF; --mint: #4FE3A1; --coral: #FF8266; --amber: #FFC14D;
+  --display: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
+  --body: 'DM Sans', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--body); color: var(--text); background: var(--bg); font-size: 17px; line-height: 1.5; }
+.wrap { max-width: 1360px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+
+.nav { position: sticky; top: 0; z-index: 5; background: rgba(7, 8, 15, 0.86); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.nav-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; padding-top: 14px; padding-bottom: 14px; }
+.logo { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 22px; }
+.mark { width: 14px; height: 14px; border-radius: 4px; background: var(--mint); transform: rotate(45deg); }
+.ticker { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-variant-numeric: tabular-nums; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--mint); animation: pulse 2s infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+.hero { padding: 64px 0 48px; background: radial-gradient(900px 480px at 12% 0%, #1B1750 0%, rgba(7, 8, 15, 0) 70%); }
+.eyebrow { margin: 0 0 20px; font-size: 14px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); }
+h1 { margin: 0; font-family: var(--display); font-weight: 600; font-size: clamp(30px, 4.2vw, 52px); line-height: 1.25; letter-spacing: -0.02em; color: var(--muted); }
+.payout { margin-top: 12px; font-family: var(--display); font-weight: 800; font-size: clamp(56px, 9vw, 120px); line-height: 1; letter-spacing: -0.04em; color: var(--mint); font-variant-numeric: tabular-nums; }
+.with { margin: 16px 0 0; font-size: 20px; color: var(--muted); }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; padding-bottom: 72px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 24px; }
+.tile-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.swatch { width: 14px; height: 40px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.3); flex: none; }
+.tile h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 24px; }
+.pill { display: inline-block; padding: 6px 14px; margin: 0 8px 8px 0; border-radius: 999px; border: 1px solid; font-size: 14px; font-weight: 700; }
+.good { color: var(--mint); background: rgba(79, 227, 161, 0.12); }
+.minor { color: var(--amber); background: rgba(255, 193, 77, 0.12); }
+.bad { color: var(--coral); background: rgba(255, 130, 102, 0.12); }
+.closed { color: var(--muted); background: var(--panel-2); border-color: var(--line); }
+.reason { margin: 6px 0 0; font-size: 15px; color: var(--muted); }
+
+footer { border-top: 1px solid var(--line); }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; padding-top: 28px; padding-bottom: 40px; font-size: 15px; color: var(--muted); }
+.foot p { margin: 0; max-width: 760px; }
+.foot a { color: inherit; }
+
+@media (max-width: 860px) {
+  .nav { backdrop-filter: none; background: var(--bg); }
+  .hero { padding: 40px 0 32px; }
+}
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-in">
+    <div class="logo"><span class="mark"></span>Tube Live</div>
+    <div class="ticker"><span class="dot"></span><span id="ticker">Loading...</span></div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">London Underground, live</p>
+    <h1>Lines running a good service right now</h1>
+    <div class="payout" id="goodCount">...</div>
+    <p class="with" id="summary">Loading status...</p>
+  </div>
+</section>
+
+<main class="wrap tiles" id="lines"></main>
+
+<footer>
+  <div class="wrap foot">
+    <p>Powered by TfL Open Data. Status is collected from Transport for London every five minutes, so check with TfL before you travel.</p>
+    <p>Part of <a href="https://ravidata.com">ravidata.com</a></p>
+  </div>
+</footer>
+
+<script>
+const SUPABASE_URL = "https://ybhcwyqqdbxonajqwdlc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_OERIIgCySwH4S4qWBnKq6Q_9nvE1HIz";
+
+const LINE_COLOURS = {
+  "bakerloo": "#B36305", "central": "#E32017", "circle": "#FFD300",
+  "district": "#00782A", "hammersmith-city": "#F3A9BB", "jubilee": "#A0A5A9",
+  "metropolitan": "#9B0056", "northern": "#000000", "piccadilly": "#003688",
+  "victoria": "#0098D4", "waterloo-city": "#95CDBA"
+};
+
+function pillClass(status) {
+  if (status === "Good Service") return "good";
+  if (status === "Minor Delays") return "minor";
+  if (status.includes("Closure")) return "closed";
+  return "bad";
+}
+
+async function load() {
+  const url = SUPABASE_URL + "/rest/v1/line_status" +
+    "?select=fetched_at,line_id,line_name,status,reason" +
+    "&order=fetched_at.desc,line_name.asc&limit=40";
+  const response = await fetch(url, { headers: { apikey: SUPABASE_KEY } });
+  const rows = await response.json();
+  const latest = rows.filter(row => row.fetched_at === rows[0].fetched_at);
+
+  const container = document.getElementById("lines");
+  container.innerHTML = "";
+  const tiles = {};
+
+  for (const row of latest) {
+    if (!tiles[row.line_id]) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      const head = document.createElement("div");
+      head.className = "tile-head";
+      const swatch = document.createElement("span");
+      swatch.className = "swatch";
+      swatch.style.background = LINE_COLOURS[row.line_id] || "#888";
+      const title = document.createElement("h2");
+      title.textContent = row.line_name;
+      head.appendChild(swatch);
+      head.appendChild(title);
+      tile.appendChild(head);
+      container.appendChild(tile);
+      tiles[row.line_id] = { tile: tile, reasons: new Set(), allGood: true };
+    }
+    const entry = tiles[row.line_id];
+    if (row.status !== "Good Service") entry.allGood = false;
+
+    const pill = document.createElement("span");
+    pill.className = "pill " + pillClass(row.status);
+    pill.textContent = row.status;
+    entry.tile.insertBefore(pill, entry.tile.querySelector(".reason"));
+
+    if (row.reason && !entry.reasons.has(row.reason)) {
+      entry.reasons.add(row.reason);
+      const reason = document.createElement("p");
+      reason.className = "reason";
+      reason.textContent = row.reason;
+      entry.tile.appendChild(reason);
+    }
+  }
+
+  const all = Object.values(tiles);
+  const good = all.filter(entry => entry.allGood).length;
+  const time = new Date(rows[0].fetched_at)
+    .toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+  document.getElementById("goodCount").textContent = good + " of " + all.length;
+  document.getElementById("summary").textContent =
+    (all.length - good) + " lines have delays or closures. Last checked at " + time + ".";
+  document.getElementById("ticker").textContent = "Updated " + time;
+}
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
